@@ -4,31 +4,18 @@ namespace jsfx.filter {
    * @description      Provides additive brightness control.
    * @param brightness -1 to 1 (-1 is solid black, 0 is no change, and 1 is solid white)
    */
-  export class Brightness extends jsfx.IterableFilter {
+  export class Brightness extends jsfx.js2glslFilter {
     constructor(brightness? : number) {
-      super(null, `
-            uniform sampler2D texture;
-            uniform float brightness;
-            varying vec2 texCoord;
-
-            void main() {
-                vec4 color = texture2D(texture, texCoord);
-                color.rgb += brightness;
-
-                gl_FragColor = color;
-            }
-        `);
-
+	super(); 
       // set properties
       this.properties.brightness = jsfx.Filter.clamp(-1, brightness, 1) || 0;
     }
 
-    public iterateCanvas(helper : jsfx.util.ImageDataHelper) : void {
-      var brightness = this.properties.brightness;
-
-      helper.r += brightness;
-      helper.g += brightness;
-      helper.b += brightness;
-    }
+      public FragmentColor(builtIns : any): number[] {
+	  var rgba = builtIns.texture2D(this.uniforms.texture, this.varyings.texCoord); 
+	  return [rgba[0] + this.uniforms.brightness,
+		  rgba[1] + this.uniforms.brightness,
+		  rgba[2] + this.uniforms.brightness ]; 
+      }
   }
 }

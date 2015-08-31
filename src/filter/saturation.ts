@@ -8,44 +8,25 @@ namespace jsfx.filter {
    *                   or away from the average color channel value.
    * @param saturation -1 to 1 (-1 is solid gray, 0 is no change, and 1 is maximum contrast)
    */
-  export class Saturation extends jsfx.IterableFilter {
-    constructor(saturation? : number) {
-      super(null, `
-            uniform sampler2D texture;
-            uniform float saturation;
-            varying vec2 texCoord;
-
-            void main() {
-                vec4 color = texture2D(texture, texCoord);
-
-                float average = (color.r + color.g + color.b) / 3.0;
-                if (saturation > 0.0) {
-                    color.rgb += (average - color.rgb) * (1.0 - 1.0 / (1.001 - saturation));
-                } else {
-                    color.rgb += (average - color.rgb) * (-saturation);
-                }
-
-                gl_FragColor = color;
-            }
-        `);
-
-      // set properties
-      this.properties.saturation = jsfx.Filter.clamp(-1, saturation, 1) || 0;
-    }
-
-    public iterateCanvas(helper : jsfx.util.ImageDataHelper) : void {
-      var saturation : number = this.properties.saturation;
-      var average : number = (helper.r + helper.g + helper.b) / 3;
-
-      if (saturation > 0) {
-        helper.r += (average - helper.r) * (1 - 1 / (1.001 - saturation));
-        helper.g += (average - helper.g) * (1 - 1 / (1.001 - saturation));
-        helper.b += (average - helper.b) * (1 - 1 / (1.001 - saturation));
-      } else {
-        helper.r += (average - helper.r) * (-saturation);
-        helper.g += (average - helper.g) * (-saturation);
-        helper.b += (average - helper.b) * (-saturation);
+  export class Saturation extends jsfx.js2glslFilter {
+      constructor(saturation? : number) {
+	  super();
+	  // set properties
+	  this.properties.saturation = jsfx.Filter.clamp(-1, saturation, 1) || 0;
       }
-    }
+      
+      public FragmentColor(builtIns : any): number[] {
+	  var rgb = builtIns.texture2D(this.uniforms.texture, this.varyings.texCoord);
+	  var average = (rgb[0] + rgb[1] + rgb[2]) / 3.0;
+	  var saturation = this.uniforms.saturation;
+	  for(var i = 0;i < 4;i++) {
+	      if(saturation > 0.0) {
+		  rgb[i] += (average - rgb[i]) * (1.0 - 1.0 / (1.001 - saturation)); 
+	      } else {
+		  rgb[i] += (average - rgb[i]) * (-saturation);
+	      }
+	  }
+	  return rgb; 
+      }
   }
 }
