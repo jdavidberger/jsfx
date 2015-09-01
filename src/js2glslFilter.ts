@@ -1,78 +1,78 @@
-/// <reference path="../node_modules/js2glsl/js2glsl.d.ts" /> 
+/// <reference path="../node_modules/js2glsl/js2glsl.d.ts" />
 
 namespace jsfx {
-    
+
     export class js2glslFilter extends js2glsl.ShaderSpecification<any,any,any> implements jsfx.IterableFilterInterface {
-	protected properties : any = {};
-	private vertexSource : string; 
-	private fragmentSource : string; 
-	
-	constructor() {
-	    super();
-	    var shaders = this.ShaderSource(); 
-	    this.vertexSource = shaders.vertex; 
-	    this.fragmentSource = shaders.fragment; 
-	    this.varyings = {}; 
-	}
+  protected properties : any = {};
+  private vertexSource : string;
+  private fragmentSource : string;
 
-	public iterateCanvas(helper : jsfx.util.ImageDataHelper) : void {
-	    var imageData = helper.getImageData();
-	    var width = imageData.width;
-	    var height = imageData.height;
-	    var x = (helper.getIndex() / 4) % width;
-	    var y = Math.floor((helper.getIndex() / 4) / width);
-	    var w = width;
-	    var h = height; 
+  constructor() {
+      super();
+      var shaders = this.ShaderSource();
+      this.vertexSource = shaders.vertex;
+      this.fragmentSource = shaders.fragment;
+      this.varyings = {};
+  }
 
-	    this.varyings.texCoord = [ x/w, (h-y-1)/h  ]; 
-	    this.varyings.texCoord = [ x/w, y/h  ]; 
-	    this.uniforms = this.properties; 
-	    this.uniforms.texture = new js2glsl.Sampler2D(imageData.data, w, h); 
-	    this.uniforms.texSize = [w, h];
-	    var rgba = this.FragmentColor(js2glsl.builtIns);
+  public iterateCanvas(helper : jsfx.util.ImageDataHelper) : void {
+      var imageData = helper.getImageData();
+      var width = imageData.width;
+      var height = imageData.height;
+      var x = (helper.getIndex() / 4) % width;
+      var y = Math.floor((helper.getIndex() / 4) / width);
+      var w = width;
+      var h = height;
 
-	    helper.r = rgba[0] || 0;
-	    helper.g = rgba[1] || 0;
-	    helper.b = rgba[2] || 0;
-	    helper.a = rgba[3] || 255; 
-	}
+      this.varyings.texCoord = [ x/w, (h-y-1)/h  ];
+      this.varyings.texCoord = [ x/w, y/h  ];
+      this.uniforms = this.properties;
+      this.uniforms.texture = new js2glsl.Sampler2D(imageData.data, w, h);
+      this.uniforms.texSize = [w, h];
+      var rgba = this.FragmentColor(js2glsl.builtIns);
 
-	public getVertexSource() : string {
-	    return this.vertexSource;
-	}
+      helper.r = rgba[0] || 0;
+      helper.g = rgba[1] || 0;
+      helper.b = rgba[2] || 0;
+      helper.a = rgba[3] || 255;
+  }
 
-	public getFragmentSource() : string {
-	    return this.fragmentSource;
-	}
+  public getVertexSource() : string {
+      return this.vertexSource;
+  }
 
-	public getProperties() : any {
-	    return this.properties; 
-	}
+  public getFragmentSource() : string {
+      return this.fragmentSource;
+  }
 
-	public drawCanvas(renderer : jsfx.canvas.Renderer) : void {
-	    return IterableFilter.drawCanvas([this], renderer);
-	}
+  public getProperties() : any {
+      return this.properties;
+  }
 
-	public drawWebGL(renderer : jsfx.webgl.Renderer) : void {
-	    var shader = renderer.getShader(this);
-	    var properties = this.getProperties();
+  public drawCanvas(renderer : jsfx.canvas.Renderer) : void {
+      return IterableFilter.drawCanvas([this], renderer);
+  }
 
-	    properties.texSize = [renderer.getSource().width, renderer.getSource().height];
+  public drawWebGL(renderer : jsfx.webgl.Renderer) : void {
+      var shader = renderer.getShader(this);
+      var properties = this.getProperties();
 
-	    renderer.getTexture().use();
-	    renderer.getNextTexture().drawTo(function () {
-		shader.uniforms(properties).drawRect();
-	    });
-	}
+      properties.texSize = [renderer.getSource().width, renderer.getSource().height];
 
-	VertexPosition(): number[] {
-	    this.varyings.texCoord = this.attributes._texCoord; 
-	    var xy = this.attributes.vertex; 
-	    return [ xy[0]*2 - 1, xy[1]*2 - 1 ]; 
-	}
+      renderer.getTexture().use();
+      renderer.getNextTexture().drawTo(function () {
+    shader.uniforms(properties).drawRect();
+      });
+  }
+
+  VertexPosition(): number[] {
+      this.varyings.texCoord = this.attributes._texCoord;
+      var xy = this.attributes.vertex;
+      return [ xy[0]*2 - 1, xy[1]*2 - 1 ];
+  }
         FragmentColor(builtIns : any): number[] {
-	    return builtIns.texture2D(this.uniforms.texture, this.varyings.texCoord); 
-	}
+      return builtIns.texture2D(this.uniforms.texture, this.varyings.texCoord);
+  }
     }
 
 }
